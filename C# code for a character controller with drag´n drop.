@@ -1,0 +1,93 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public class PLAYER : MonoBehaviour
+
+{
+    CharacterController cc;
+    public float speed = 6;
+    public GameObject respawn;
+    public Transform foot;
+    public LayerMask mask;
+    Vector3 vel;
+    int doubleJump = 0;
+    public float jump = 5;
+    Transform item;
+    public Transform hand;
+    public float min, max;
+
+    public bool transport;
+    // Start is called before the first frame update
+    void Start()
+    {
+        cc = GetComponent<CharacterController>();
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+       if(!transport){
+           Move();
+           Gravity();
+           DropItem();
+       } 
+       if(transport){
+           if(Input.GetKeyDown(KeyCode.V)){
+               transport = false;
+               transform.SetParent(null);
+               transform.rotation = Quaternion.identity;
+           }
+       }
+    }
+    void Move(){
+        float h = Input.GetAxis("Horizontal");
+        float v = Input.GetAxis("Vertical");
+        Vector3 move = transform.forward * v;
+        transform.Rotate(0, h * 90 * Time.deltaTime, 0);
+        cc.Move(move * speed * Time.deltaTime);
+    }
+    void Gravity(){
+        bool isGrounded = Physics.CheckSphere(foot.position, .2f, mask);
+        if(!isGrounded){
+            vel.y += -9.81f * Time.deltaTime;
+        }else{
+            doubleJump = 0;
+        }
+        if(Input.GetKeyDown(KeyCode.Space) && (isGrounded || (doubleJump < 2))){
+            vel.y = jump;
+            doubleJump++;
+        }
+        cc.Move(vel * Time.deltaTime);
+    }
+    void DragItem(GameObject obj){
+        if(Input.GetKey(KeyCode.C) && (item == null)){
+            item = obj.transform;
+            item.SetParent(hand);
+            item.position = hand.position;
+            item.GetComponent<Rigidbody>().isKinematic = true;
+        }
+    }
+    void DropItem(){
+        if(Input.GetKeyDown(KeyCode.V) && (item != null)){
+            item.GetComponent<Rigidbody>().isKinematic = false;
+            item.SetParent(null);
+            item = null;
+        }
+    }
+    void OnControllerColliderHit(ControllerColliderHit other){
+        if(other.gameObject.CompareTag("Interact")){
+            DragItem(other.gameObject);
+        }
+        Rigidbody body = other.collider.attachedRigidbody;
+        if(body != null){
+            body.velocity = other.moveDirection * 2.0f;
+        }
+    }
+    void OnTriggerEnter(Collider other){
+        if(other.gameObject.CompareTag("mar")){
+           SceneManager.LoadScene("GAME");
+        }      
+    }
+}
