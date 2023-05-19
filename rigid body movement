@@ -1,0 +1,57 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+//this class controls player movements
+public class MoverRB : MonoBehaviour
+{
+    //variables
+    public sbyte playerSpeed = 5;
+    public int rotationSpeed = 720;
+    public sbyte dashSpeed = 10;
+    public sbyte playerStamina = 30;
+
+    //defines a rigidbody component 
+    Rigidbody rb;
+    
+    void Start()
+    {
+        // get the component Rigidbody from the character object and assign to the previous defined component
+        rb=GetComponent<Rigidbody>();    
+    }
+    void FixedUpdate()
+    {
+        //Set Keys to direcional movement
+        float horizontal = Input.GetAxis("Horizontal");
+        float vertical = Input.GetAxis("Vertical");
+        
+        //creates a vector3 for the character direction
+        Vector3 direction = new Vector3(horizontal, 0, vertical);
+       
+        //Move Position
+        rb.MovePosition(transform.position + direction * playerSpeed * Time.deltaTime);
+        
+        //change directly speed
+        //rb.velocity = direction * playerSpeed;
+
+        //increase force
+        //rb.AddForce(direction * playerSpeed);
+
+        //character rotation
+        if(direction != Vector3.zero)
+        {
+            Quaternion toRotation = Quaternion.LookRotation(direction, Vector3.up);
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, toRotation, rotationSpeed * Time.deltaTime);
+        }
+
+        //Dash sistem, for each dash is decreased 10 stamina points
+        if (Input.GetKeyUp(KeyCode.LeftShift))
+        {
+            if(playerStamina > 0){
+            rb.velocity = direction * dashSpeed;
+            playerStamina -= 10;
+            }
+        }
+        
+    }
+}
