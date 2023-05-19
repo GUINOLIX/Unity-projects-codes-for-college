@@ -1,0 +1,92 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class Move2D : MonoBehaviour
+{
+    public Rigidbody2D rb;
+    public int moveSpeed;
+    public int extraJump = 1;
+    private float direction;
+
+    public Animator animator;
+
+    private Vector3 facingRight;
+    private Vector3 facingLeft;
+
+    public bool grounded;
+    public Transform isGrounded;
+    public LayerMask ground;
+
+    void Start()
+    {
+        //define a direcao e vira o personagem para os lados 
+        facingRight = transform.localScale;
+        facingLeft = transform.localScale;
+        facingLeft.x = facingLeft.x * -1;
+
+        //chama o componente de fisica do personagem
+        rb = GetComponent<Rigidbody2D>();
+
+        //chama o componente de animacao 
+        animator=GetComponent<Animator>();
+    }
+
+    
+    void Update()
+    {
+        //verifica se o personagem esta andando e ativa/desativa a animacao run
+        if(Input.GetAxis("Horizontal") != 0){
+            //esta correndo
+            animator.SetBool("IsRuning", true);
+        }else{
+            //esta parado
+            animator.SetBool("IsRuning", false);
+        }
+
+        //verifica se o personagem esta no chao 
+        grounded = Physics2D.OverlapCircle(isGrounded.position, 0.2f, ground);
+
+        // se o botao de pular for clicado e se o personagem estiver no chao pula e ativa a animacao para pular
+        if(Input.GetButtonDown("Jump") && grounded == true){
+            rb.velocity = Vector2.up * 10;
+            //ativar animacao pulo
+            animator.SetBool("IsJumping", true);
+        }
+
+        //se o personagem esta pulando e se ele tem pulos extras disponiveis ativa a animacao para pulo duplo
+         if(Input.GetButtonDown("Jump") && grounded == false && extraJump > 0){
+            rb.velocity = Vector2.up * 10;
+            extraJump--;
+             //ativar animacao pulo duplo
+            animator.SetBool("DoubleJump", true);
+        }
+
+        //se o personagem esta no chao e nao esta pulando volta os pulos extras e desativa as animacoes de pulo
+        if(grounded && rb.velocity.y == 0){
+
+            extraJump = 1;
+             animator.SetBool("IsJumping", false);
+             animator.SetBool("DoubleJump", false);
+        }
+
+        //define a direcao com os botoes para direita e esquerda: setas e A e D
+        direction = Input.GetAxis("Horizontal");
+        
+        //se a direcao for maior que zero o personagem olha para a direita se for menor que zero olha para a esquerda
+        if(direction > 0){
+            //looking right
+            transform.localScale = facingRight; 
+        }
+        if(direction < 0){
+            //looking left
+            transform.localScale=facingLeft;
+        }
+        //move o personagem
+        rb.velocity = new Vector2(direction*moveSpeed, rb.velocity.y);        
+    }
+ 
+    
+
+   
+}
